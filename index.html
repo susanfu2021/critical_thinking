@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Parallel Path</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            /* Allow clicks anywhere on the body */
+            cursor: pointer; 
+        }
+
+        .book-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            width: 90%;
+            max-width: 700px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #book-image {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 1.5rem;
+        }
+
+        #book-content {
+            text-align: left;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 1.1em;
+            overflow-y: auto;
+            max-height: 50vh;
+            padding-right: 15px;
+        }
+
+        h1, h2, p {
+            margin: 0.5rem 0;
+        }
+
+        #title, #author {
+            color: #222;
+        }
+        
+        #page-number {
+            font-weight: bold;
+            color: #666;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="book-container">
+        <h1 id="title"></h1>
+        <h2 id="author"></h2>
+        <img id="book-image" src="" alt="Book Image">
+        <p id="book-content"></p>
+        <p id="page-number"></p>
+    </div>
+
+    <script>
+        const bookData = {
+  "1": "Dr. Aris was a mathematician of great renown, but he was stuck. His problem was a knot of numbers and symbols, and his one, straight-line approach was failing him. He drew a single, determined line on his great blackboard, but it led nowhere.",
+  "2": "Exhausted and frustrated, he slumped into his chair and fell into a deep sleep. But his mind, ever-active, began to wander. The rigid lines of his world softened and swirled into a strange, new landscape.",
+  "3": "He awoke in a world of pure thought, a place where concepts had form. There, he saw a nimble figure named Pippa, who was not walking a single path, but bouncing joyfully between many. Each path was a different color, a different possibility.",
+  "4": "\"Why follow one path,\" she chirped, \"when you can explore them all at once?\" She showed him how she could get from one point to another by traveling on a red path, a blue path, and a yellow path, all at the same time, without choosing just one.",
+  "5": "Dr. Aris tried to follow her example, but his mind was trained for a single, straight line. He chose one path and tried to walk it, but it twisted and turned in ways he didn't expect, and he found himself stuck.",
+  "6": "\"The solution isn't in one path,\" Pippa said, \"but in the way they all connect. Each path holds a piece of the answer, a different way of looking at the same problem.\"",
+  "7": "Just then, a calm, wise figure named Caelus appeared. \"Pippa's paths are like different minds,\" he said. \"Each one sees the problem from a unique perspective. The true solution is found when they work together.\"",
+  "8": "Caelus showed him how the different paths, when viewed together, formed a beautiful, complex pattern. The intersections were not dead ends, but moments of insight. The loops were not mistakes, but elegant solutions.",
+  "9": "Dr. Aris understood. His linear approach was like trying to see a whole constellation by only looking at one star. The solution to his problem wasn't a single line, but the entire network of possibilities, all working in parallel.",
+  "10": "He woke up, the morning sun streaming through his window. The blackboard was still there, but he no longer saw it as a place for a single line. He picked up his chalk and, with a new sense of purpose, began to draw not one path, but many, exploring the problem from every angle at once.",
+  "title": "The Parallel Path",
+  "author": "By AI"
+};
+        
+        const synth = window.speechSynthesis;
+        
+        function speakContent(text) {
+            if (!synth) {
+                console.warn("Speech synthesis not supported.");
+                return;
+            }
+            
+            // Stop any current speech
+            if (synth.speaking) {
+                synth.cancel();
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            synth.speak(utterance);
+        }
+        
+        function stopSpeaking() {
+            if (synth && synth.speaking) {
+                synth.cancel();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const imageElement = document.getElementById('book-image');
+            const contentElement = document.getElementById('book-content');
+            const titleElement = document.getElementById('title');
+            const authorElement = document.getElementById('author');
+            const pageNumberElement = document.getElementById('page-number');
+            
+            let currentPage = -1; // -1 for cover
+
+            function updateUI() {
+                const bookKeys = Object.keys(bookData);
+                const isCoverPage = currentPage === -1;
+                const isEndPage = currentPage === bookKeys.filter(key => !isNaN(parseInt(key))).length;
+                const totalTextPages = bookKeys.filter(key => !isNaN(parseInt(key))).length;
+                
+                let imagePath, content, title, author, pageText;
+
+                // --- 1. Determine Content and Metadata ---
+                if (isCoverPage) {
+                    title = bookData.title || 'Untitled';
+                    author = bookData.author || 'Unknown Author';
+                    imagePath = `images/${bookData.cover || 'cover.png'}`;
+                    content = bookData.cover_text || '';
+                    pageText = ''; // Removed "Cover Page" text
+                } else if (isEndPage) {
+                    title = bookData.title;
+                    author = bookData.author;
+                    imagePath = `images/end.png`;
+                    content = bookData.end || '';
+                    pageText = 'End Page';
+                } else {
+                    const pageKey = (currentPage + 1).toString();
+                    title = ''; // Hidden on content pages
+                    author = ''; // Hidden on content pages
+                    imagePath = `images/${pageKey}.png`;
+                    content = bookData[pageKey] || '';
+                    pageText = `Page ${pageKey} of ${totalTextPages}`;
+                }
+                
+                // --- 2. Update DOM Elements ---
+                // Show/Hide Title and Author
+                titleElement.style.display = isCoverPage ? 'block' : 'none';
+                authorElement.style.display = isCoverPage ? 'block' : 'none';
+
+                titleElement.textContent = bookData.title;
+                authorElement.textContent = bookData.author;
+                imageElement.src = imagePath;
+                contentElement.textContent = content;
+                pageNumberElement.textContent = pageText;
+                
+                // --- 3. Speech Logic (Speak only the relevant content) ---
+                let speechText;
+                if (isCoverPage) {
+                    // Announce the full title and author on the cover page
+                    speechText = `${bookData.title}. By ${bookData.author}. ${content}`;
+                } else {
+                    // Speak only the content for internal pages
+                    speechText = content;
+                }
+                
+                stopSpeaking();
+                speakContent(speechText);
+            }
+
+            function changePage(direction) {
+                const totalTextPages = Object.keys(bookData).filter(key => !isNaN(parseInt(key))).length;
+                let newPage = currentPage + direction;
+
+                // --- CORE CHANGE: Navigation Looping Logic ---
+                if (direction === 1) { // Moving forward (Next)
+                    if (newPage > totalTextPages) {
+                        // Loop back to the cover page
+                        newPage = -1; 
+                    } else if (newPage > totalTextPages + 1) {
+                         // Prevent overshoot, should only happen if totalTextPages is 0
+                         return;
+                    }
+                } else if (direction === -1) { // Moving backward (Previous)
+                    if (newPage < -1) {
+                        // Prevent going past the cover page
+                        return; 
+                    }
+                }
+                
+                // Only update if the new page is within valid boundaries
+                if (newPage >= -1 && newPage <= totalTextPages) {
+                    currentPage = newPage;
+                    updateUI();
+                }
+            }
+
+            // --- Navigation Logic ---
+
+            // Handle Clicks (Right = Next, Left = Previous)
+            document.body.addEventListener('click', (event) => {
+                const totalTextPages = Object.keys(bookData).filter(key => !isNaN(parseInt(key))).length;
+                const isRightSide = event.clientX > window.innerWidth / 2;
+                
+                if (isRightSide) {
+                    // Next Page logic - loops if on end page
+                    changePage(1);
+                } else {
+                    // Previous Page logic - stops at cover page
+                    if (currentPage > -1) {
+                        changePage(-1);
+                    }
+                }
+            });
+
+            // Handle Key Presses (Enter = Next, Left Arrow = Previous, Right Arrow = Next)
+            document.body.addEventListener('keyup', (event) => {
+                const totalTextPages = Object.keys(bookData).filter(key => !isNaN(parseInt(key))).length;
+                
+                // Check for Enter key (keyCode 13 or key 'Enter')
+                if (event.key === 'Enter' || event.keyCode === 13) {
+                    // Treat Enter as a Next action - loops if on end page
+                    changePage(1);
+                } 
+                // Optional: Allow arrow keys for a common UX pattern
+                else if (event.key === 'ArrowRight' || event.keyCode === 39) {
+                    // Next action - loops if on end page
+                    changePage(1);
+                } else if (event.key === 'ArrowLeft' || event.keyCode === 37) {
+                    // Previous action - stops at cover page
+                    if (currentPage > -1) {
+                        changePage(-1);
+                    }
+                }
+            });
+            
+            updateUI(); // Initial UI setup
+        });
+    </script>
+</body>
+</html>
